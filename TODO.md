@@ -1,5 +1,4 @@
 # Tasks
-* Function for running cfssl
 * Distribute the certs
 
 ## Future

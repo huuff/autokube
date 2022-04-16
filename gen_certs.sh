@@ -30,13 +30,27 @@ function csr_filename {
 }
 
 function sign_csr {
-  cfssl gencert \
-    -loglevel=4 \
-    -ca=ca.pem \
-    -ca-key=ca-key.pem \
-    -config=ca-config.json \
-    -profile=kubernetes \
-    "$(csr_filename "$1")" | cfssljson -bare "$1"
+  # TODO: DRY, I could pass an empty -hostname, but I don't know
+  # what cfssl will do in that case, so I'm just being careful here
+  if [ -z "${2:-""}" ] # empty or unset
+  then
+    cfssl gencert \
+      -loglevel=4 \
+      -ca=ca.pem \
+      -ca-key=ca-key.pem \
+      -config=ca-config.json \
+      -profile=kubernetes \
+      "$(csr_filename "$1")" | cfssljson -bare "$1"
+  else
+    cfssl gencert \
+      -loglevel=4 \
+      -ca=ca.pem \
+      -ca-key=ca-key.pem \
+      -config=ca-config.json \
+      -hostname="$2" \
+      -profile=kubernetes \
+      "$(csr_filename "$1")" | cfssljson -bare "$1"
+  fi
 }
 
 # Joins arguments with first argument as separator
@@ -76,15 +90,8 @@ echo ">>> Generating kubelet client certificates"
 for worker_hostname in "${!workers[@]}"; do
   worker_ip=${workers["$worker_hostname"]}
   echo ">>>>>> Generating for $worker_hostname:$worker_ip"
-  gen_csr "system:node:$worker_hostname" "system:nodes" > "$worker_hostname-csr.json"
-  cfssl gencert \
-    -loglevel=4 \
-    -ca=ca.pem \
-    -ca-key=ca-key.pem \
-    -config=ca-config.json \
-    -hostname="$worker_hostname,$worker_ip" \
-    -profile=kubernetes \
-    "$worker_hostname-csr.json" | cfssljson -bare "$worker_hostname"
+  gen_csr "system:node:$worker_hostname" "system:nodes" > "$(csr_filename "$worker_hostname")"
+  sign_csr "$worker_hostname"
 done
 
 echo ">>> Generating the controller-manager client certificate"
@@ -100,16 +107,9 @@ gen_csr "system:kube-scheduler" "system:kube-scheduler" > "$(csr_filename "kube-
 sign_csr "kube-scheduler"
 
 echo ">>> Generating the apiserver certificate"
-KUBERNETES_HOSTNAMES=kubernetes,kubernetes.default,kubernetes.default.svc,kubernetes.default.svc.cluster,kubernetes.svc.cluster.local
-gen_csr "kubernetes" "Kubernetes" > kubernetes-csr.json
-cfssl gencert \
-  -loglevel=4 \
-  -ca=ca.pem \
-  -ca-key=ca-key.pem \
-  -config=ca-config.json \
-  -hostname="10.32.0.1,$(join_by , "${controllers[@]}"),127.0.0.1,$KUBERNETES_HOSTNAMES" \
-  -profile=kubernetes \
-  kubernetes-csr.json | cfssljson -bare kubernetes
+KUBERNETES_HOSTNAMES="10.32.0.1,$(join_by , "${controllers[@]}"),127.0.0.1,kubernetes,kubernetes.default,kubernetes.default.svc,kubernetes.default.svc.cluster,kubernetes.svc.cluster.local"
+gen_csr "kubernetes" "Kubernetes" > "$(csr_filename "kubernetes")"
+sign_csr "kubernetes" "$KUBERNETES_HOSTNAMES"
 
 echo ">>> Generating the service account key pair"
 gen_csr "service-accounts" "Kubernetes" > "$(csr_filename "service-account")"
