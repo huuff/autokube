@@ -14,46 +14,35 @@ API_ADDRESS="${controllers_addresses[${controllers_hostnames[0]}]}"
 mkdir config
 cd config || exit 1
 
-echo ">>> Generating worker auth configs"
-for worker in "${workers_hostnames[@]}"; do
-  echo ">>>>>> Generating config for ${worker}"
+function gen_config {
+  # $1: identifier of the entity (i.e. hostname for nodes/masters or service names for service)
+  # $2: user identifier
   kubectl config set-cluster "$CLUSTER_ID" \
     --certificate-authority=../certs/ca.pem \
     --embed-certs=true \
     --server="https://${API_ADDRESS}:6443" \
-    --kubeconfig="${worker}.kubeconfig" > /dev/null
+    --kubeconfig="$1.kubeconfig" > /dev/null
 
-  kubectl config set-credentials "system:node:$worker" \
-    --client-certificate="../certs/${worker}.pem" \
-    --client-key="../certs/${worker}-key.pem" \
+  kubectl config set-credentials "$2" \
+    --client-certificate="../certs/$1.pem" \
+    --client-key="../certs/$1-key.pem" \
     --embed-certs=true \
-    --kubeconfig="${worker}.kubeconfig" > /dev/null
+    --kubeconfig="$1.kubeconfig" > /dev/null
 
   kubectl config set-context default \
     --cluster="$CLUSTER_ID" \
-    --user="system:node:$worker" \
-    --kubeconfig="${worker}.kubeconfig" > /dev/null
+    --user="$2" \
+    --kubeconfig="$1.kubeconfig" > /dev/null
 
-  kubectl config use-context default --kubeconfig="${worker}.kubeconfig" > /dev/null
+  kubectl config use-context default --kubeconfig="$1.kubeconfig" > /dev/null
+}
+
+echo ">>> Generating worker auth configs"
+for worker in "${workers_hostnames[@]}"; do
+  echo ">>>>>> Generating config for ${worker}"
+  gen_config "$worker" "system:node:$worker"
 done
 
 echo ">>> Generating kube-config auth config"
-kubectl config set-cluster "$CLUSTER_ID" \
-  --certificate-authority=../certs/ca.pem \
-  --embed-certs=true \
-  --server="https://${API_ADDRESS}:6443" \
-  --kubeconfig=kube-proxy.kubeconfig > /dev/null
-
-kubectl config set-credentials "system:kube-proxy" \
-  --client-certificate=../certs/kube-proxy.pem \
-  --client-key=../certs/kube-proxy-key.pem \
-  --embed-certs=true \
-  --kubeconfig=kube-proxy.kubeconfig > /dev/null
-
-kubectl config set-context default \
-  --cluster="${CLUSTER_ID}" \
-  --user="system:kube-proxy" \
-  --kubeconfig=kube-proxy.kubeconfig  > /dev/null
-
-kubectl config use-context default --kubeconfig=kube-proxy.kubeconfig > /dev/null
+gen_config "kube-proxy" "systeb:kube-proxy"
 ls
