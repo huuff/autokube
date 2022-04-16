@@ -1,9 +1,16 @@
 #!/usr/bin/env bash
 set -euo pipefail
+set -- "${1:-./sample-cluster.json}"
 CONF=$(realpath "$1")
 CERT_C=$(jq -r '.certs.C' "$CONF")
 CERT_L=$(jq -r '.certs.L' "$CONF")
 CERT_OU=$(jq -r '.cluster.name' "$CONF")
+
+declare -A workers
+for hostname in $(jq -r '.workers[].hostname' "$CONF"); do
+  workers["$hostname"]=$(jq -r --arg h "$hostname" '.workers[] | select(.hostname == $h) | .address' "$CONF")
+done
+
 WORKDIR=$(mktemp -d)
 cd "$WORKDIR" || exit 1
 
@@ -58,4 +65,19 @@ cfssl gencert \
   -profile=kubernetes \
   admin-csr.json | cfssljson -bare admin
 
+echo ">>> Generating kubelet client certificates"
+for worker_hostname in "${!workers[@]}"; do
+  worker_ip=${workers["$worker_hostname"]}
+  echo ">>>>>> Generating for $worker_hostname:$worker_ip"
+  gen_csr "system:node:$worker_hostname" "system:nodes" "$CERT_OU" > "$worker_hostname-csr.json"
+  cfssl gencert \
+    -loglevel=4 \
+    -ca=ca.pem \
+    -ca-key=ca-key.pem \
+    -config=ca-config.json \
+    -hostname="$worker_hostname,$worker_ip" \
+    -profile=kubernetes \
+    "$worker_hostname-csr.json" | cfssljson -bare "$worker_hostname"
+done
 
+ls
