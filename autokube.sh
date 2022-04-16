@@ -1,8 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 set -- "${1:-./sample-cluster.json}"
+
 GEN_CERTS_SCRIPT=$(realpath ./gen_certs.sh)
 GEN_CONFIGS_SCRIPT=$(realpath ./gen_configs.sh)
+GEN_ENCRYPTION_SCRIPT=$(realpath ./gen_encryption.sh)
+
 CONF=$(realpath "$1")
 CLUSTER_ID=$(jq -r '.cluster.id' "$CONF")
 
@@ -31,14 +34,19 @@ for hostname in $(jq -r '.controllers[].hostname' "$CONF"); do
   controllers_users["$hostname"]=$(jq -r --arg h "$hostname" '.controllers[] | select(.hostname == $h) | .user' "$CONF")
 done
 
-echo "Step 0: Generate and distribute certs"
+echo "Step 1: Generate and distribute certs"
 echo "=========="
 # shellcheck disable=1090,1091
 source "$GEN_CERTS_SCRIPT"
 cd "$WORKDIR" || exit 1
 
-echo "Step 1: Generate and distribute auth configs"
+echo "Step 2: Generate and distribute auth configs"
 echo "=========="
 # shellcheck disable=1090,1091
 source "$GEN_CONFIGS_SCRIPT"
+cd "$WORKDIR" || exit 1
+
+echo "Step 3: Generating and distributing encryption config"
+# shellcheck disable=1090,1091
+source "$GEN_ENCRYPTION_SCRIPT"
 cd "$WORKDIR" || exit 1

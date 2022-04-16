@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Generate certs for all components and distribute them to the servers
 
 CERT_C=$(jq -r '.certs.C' "$CONF")
 CERT_L=$(jq -r '.certs.L' "$CONF")

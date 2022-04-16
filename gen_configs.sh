@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Generate auth configs using certs and distribute them to all servers
+
 declare CLUSTER_ID
 declare workers_hostnames
 declare -A workers_addresses
