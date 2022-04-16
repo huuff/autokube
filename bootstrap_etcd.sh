@@ -79,11 +79,11 @@ for controller in "${controllers_hostnames[@]}"; do
   echo ">>>>>>>>> Starting etcd"
   ssh "$ssh_target" "tar -xf $ETCD_FILENAME"
   ssh -tt "$ssh_target" "\
-    sudo mv $ETCD_PATH/etcd* /usr/local/bin \
+    sudo cp $ETCD_PATH/etcd* /usr/local/bin \
     && sudo mkdir -p /etc/etcd /var/lib/etcd \
     && sudo chmod 700 /var/lib/etcd \
     && sudo cp ca.pem kubernetes-key.pem kubernetes.pem /etc/etcd \
-    && sudo mv \"$etcd_unit\" /etc/systemd/system/etcd.service \
+    && sudo cp \"$etcd_unit\" /etc/systemd/system/etcd.service \
     && sudo systemctl daemon-reload \
     && sudo systemctl enable etcd \
     && sudo systemctl start etcd \
