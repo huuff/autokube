@@ -7,14 +7,20 @@ CONF=$(realpath "$1")
 WORKDIR=$(mktemp -d)
 cd "$WORKDIR" || exit 1
 
-declare -A workers
+declare workers_hostnames
+declare -A workers_addresses
 for hostname in $(jq -r '.workers[].hostname' "$CONF"); do
-  workers["$hostname"]=$(jq -r --arg h "$hostname" '.workers[] | select(.hostname == $h) | .address' "$CONF")
+  workers_hostnames+=("$hostname")
+  # shellcheck disable=2034
+  workers_addresses["$hostname"]=$(jq -r --arg h "$hostname" '.workers[] | select(.hostname == $h) | .address' "$CONF")
 done
 
-declare -A controllers
+declare controllers_hostnames
+declare -A controllers_addresses
 for hostname in $(jq -r '.controllers[].hostname' "$CONF"); do
-  controllers["$hostname"]=$(jq -r --arg h "$hostname" '.controllers[] | select(.hostname == $h) | .address' "$CONF")
+  controllers_hostnames+=("$hostname")
+  # shellcheck disable=2034
+  controllers_addresses["$hostname"]=$(jq -r --arg h "$hostname" '.controllers[] | select(.hostname == $h) | .address' "$CONF")
 done
 
 # shellcheck disable=1090,1091

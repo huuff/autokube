@@ -3,8 +3,8 @@
 CERT_C=$(jq -r '.certs.C' "$CONF")
 CERT_L=$(jq -r '.certs.L' "$CONF")
 CERT_OU=$(jq -r '.cluster.name' "$CONF")
-declare -A workers
-declare -A controllers
+declare workers_hostnames
+declare controllers_hostnames
 function gen_csr {
   cat <<EOF
 {
@@ -18,7 +18,7 @@ function gen_csr {
       "C": "$CERT_C",
       "L": "$CERT_L",
       "O": "$2",
-      "OU": "${3:-CERT_OU}"
+      "OU": "${3:-$CERT_OU}"
     } 
   ]
 }
@@ -87,9 +87,8 @@ gen_csr "admin" "system:masters" > "$(csr_filename "admin")"
 sign_csr "admin"
 
 echo ">>> Generating kubelet client certificates"
-for worker_hostname in "${!workers[@]}"; do
-  worker_ip=${workers["$worker_hostname"]}
-  echo ">>>>>> Generating for $worker_hostname:$worker_ip"
+for worker_hostname in "${workers_hostnames[@]}"; do
+  echo ">>>>>> Generating for $worker_hostname"
   gen_csr "system:node:$worker_hostname" "system:nodes" > "$(csr_filename "$worker_hostname")"
   sign_csr "$worker_hostname"
 done
@@ -107,11 +106,11 @@ gen_csr "system:kube-scheduler" "system:kube-scheduler" > "$(csr_filename "kube-
 sign_csr "kube-scheduler"
 
 echo ">>> Generating the apiserver certificate"
-KUBERNETES_HOSTNAMES="10.32.0.1,$(join_by , "${controllers[@]}"),127.0.0.1,kubernetes,kubernetes.default,kubernetes.default.svc,kubernetes.default.svc.cluster,kubernetes.svc.cluster.local"
+KUBERNETES_HOSTNAMES="10.32.0.1,$(join_by , "${controllers_hostnames[@]}"),127.0.0.1,kubernetes,kubernetes.default,kubernetes.default.svc,kubernetes.default.svc.cluster,kubernetes.svc.cluster.local"
 gen_csr "kubernetes" "Kubernetes" > "$(csr_filename "kubernetes")"
 sign_csr "kubernetes" "$KUBERNETES_HOSTNAMES"
 
 echo ">>> Generating the service account key pair"
 gen_csr "service-accounts" "Kubernetes" > "$(csr_filename "service-account")"
 sign_csr "service-account"
-ls
+
