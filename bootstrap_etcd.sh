@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # shellcheck disable=2029,2087,1090
 
+# TODO: Create a new dir and cd into it
+
 declare join_by
 source "$join_by"
 declare controllers_hostnames
