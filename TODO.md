@@ -8,3 +8,7 @@
 * Literally any language would be better than bash
 * OpenAPI spec for the config file
 * So much calling `jq` gotta be making it slow
+* Verifications:
+  * Correct files are generated
+  * Files are uploaded to the servers?
+  * Cluster info is correct?
