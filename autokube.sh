@@ -134,4 +134,14 @@ cfssl gencert \
   -hostname="10.32.0.1,$(join_by , "${controllers[@]}"),127.0.0.1,$KUBERNETES_HOSTNAMES" \
   -profile=kubernetes \
   kubernetes-csr.json | cfssljson -bare kubernetes
+
+echo ">>> Generating the service account key pair"
+gen_csr "service-accounts" "Kubernetes" "$CERT_OU" > service-account-csr.json
+cfssl gencert \
+  -loglevel=4 \
+  -ca=ca.pem \
+  -ca-key=ca-key.pem \
+  -config=ca-config.json \
+  -profile=kubernetes \
+  service-account-csr.json | cfssljson -bare service-account
 ls
