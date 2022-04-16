@@ -1,4 +1,5 @@
 # Tasks
+* Some logging level or quiet/non-quiet config to disable, for example, the `-q` flag to `scp`
 
 ## Future
 * Literally any language would be better than bash

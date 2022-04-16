@@ -9,6 +9,9 @@ declare -A workers_users
 declare controllers_hostnames
 declare -A controllers_addresses
 declare -A controllers_users
+
+mkdir certs
+cd certs || exit 1
 function gen_csr {
   cat <<EOF
 {
@@ -65,7 +68,6 @@ function join_by {
   echo -n "$*"
 }
 
-echo "Step 0: Generating certs"
 echo ">>> Generating CA certificate"
 cat > ca-config.json <<EOF
 {
@@ -122,11 +124,13 @@ echo ">>> Distributing all generated certs"
 for worker in "${workers_hostnames[@]}"; do
   address="${workers_addresses["$worker"]}"
   user="${workers_users["$worker"]}"
-  scp ca.pem "${worker}.pem" "${worker}-key.pem" "${user}@${address}:~/"
+  echo ">>>>>> Distributing for ${worker}:${address}"
+  scp -q ca.pem "${worker}.pem" "${worker}-key.pem" "${user}@${address}:~/"
 done
 
 for controller in "${controllers_hostnames[@]}"; do
   address="${controllers_addresses["$controller"]}"
   user="${controllers_users["$controller"]}"
-  scp ca.pem kubernetes.pem kubernetes-key.pem service-account.pem service-account-key.pem "${user}@${address}:~/"
+  echo ">>>>>> Distributing for ${controller}:${address}"
+  scp -q ca.pem kubernetes.pem kubernetes-key.pem service-account.pem service-account-key.pem "${user}@${address}:~/"
 done
