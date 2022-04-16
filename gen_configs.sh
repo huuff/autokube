@@ -44,6 +44,17 @@ for worker in "${workers_hostnames[@]}"; do
   gen_config "$worker" "system:node:$worker"
 done
 
-echo ">>> Generating kube-config auth config"
-gen_config "kube-proxy" "systeb:kube-proxy"
+echo ">>> Generating kube-proxy auth config"
+gen_config "kube-proxy" "system:kube-proxy"
+
+echo ">>> Generating kube-controller-manager auth config"
+gen_config "kube-controller-manager" "system:kube-controller-manager" "127.0.0.1"
+
+echo ">>> Generating kube-scheduler auth config"
+gen_config "kube-scheduler" "system:kube-scheduler" "127.0.0.1"
+
+echo ">>> Generating admin auth config"
+gen_config "admin" "admin" "127.0.0.1"
+
+# TODO: Distribute the configs!
 ls
