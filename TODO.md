@@ -1,5 +1,6 @@
 # Tasks
 * Some logging level or quiet/non-quiet config to disable, for example, the `-q` flag to `scp`
+* Flake dev with all required commands: `cfssl`, `wget`, `kubectl`, ...
 
 ## Not so important
 * Decide between uppercase and lowercase variable names already

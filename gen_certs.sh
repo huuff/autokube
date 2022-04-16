@@ -1,9 +1,12 @@
 #!/usr/bin/env bash
+# shellcheck disable=1090
 # Generate certs for all components and distribute them to the servers
 
 CERT_C=$(jq -r '.certs.C' "$CONF")
 CERT_L=$(jq -r '.certs.L' "$CONF")
 CERT_OU=$(jq -r '.cluster.name' "$CONF")
+declare join_by
+source "$join_by"
 declare workers_hostnames
 declare -A workers_addresses
 declare -A workers_users
@@ -63,14 +66,6 @@ function sign_csr {
   fi
 }
 
-# Joins arguments with first argument as separator
-# I use it for associative arrays as `join_by , "${FOO[@]}"`
-function join_by {
-  local IFS="$1"
-  shift
-  echo -n "$*"
-}
-
 echo ">>> Generating CA certificate"
 cat > ca-config.json <<EOF
 {
@@ -115,7 +110,9 @@ gen_csr "system:kube-scheduler" "system:kube-scheduler" > "$(csr_filename "kube-
 sign_csr "kube-scheduler"
 
 echo ">>> Generating the apiserver certificate"
-KUBERNETES_HOSTNAMES="10.32.0.1,$(join_by , "${controllers_hostnames[@]}"),127.0.0.1,kubernetes,kubernetes.default,kubernetes.default.svc,kubernetes.default.svc.cluster,kubernetes.svc.cluster.local"
+KUBERNETES_HOSTNAMES="10.32.0.1,$(join_by , "${!controllers_addresses[@]}"),127.0.0.1,kubernetes,kubernetes.default,kubernetes.default.svc,kubernetes.default.svc.cluster,kubernetes.svc.cluster.local"
+# TODO: wtf why does not work, it should contain the address of controller-0, not the hostname
+echo "$KUBERNETES_HOSTNAMES"
 gen_csr "kubernetes" "Kubernetes" > "$(csr_filename "kubernetes")"
 sign_csr "kubernetes" "$KUBERNETES_HOSTNAMES"
 
