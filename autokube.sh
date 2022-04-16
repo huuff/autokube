@@ -32,11 +32,13 @@ for hostname in $(jq -r '.controllers[].hostname' "$CONF"); do
 done
 
 echo "Step 0: Generate and distribute certs"
+echo "=========="
 # shellcheck disable=1090,1091
 source "$GEN_CERTS_SCRIPT"
 cd "$WORKDIR" || exit 1
 
 echo "Step 1: Generate and distribute auth configs"
+echo "=========="
 # shellcheck disable=1090,1091
 source "$GEN_CONFIGS_SCRIPT"
 cd "$WORKDIR" || exit 1

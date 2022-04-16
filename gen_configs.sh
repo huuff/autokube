@@ -56,5 +56,17 @@ gen_config "kube-scheduler" "system:kube-scheduler" "127.0.0.1"
 echo ">>> Generating admin auth config"
 gen_config "admin" "admin" "127.0.0.1"
 
-# TODO: Distribute the configs!
-ls
+echo ">>> Distributing the configs"
+for worker in "${workers_hostnames[@]}"; do
+  echo ">>>>>> Distributing config to $worker"
+  user=${workers_users["$worker"]}
+  address=${workers_addresses["$worker"]}
+  scp -q "$worker.kubeconfig" "kube-proxy.kubeconfig" "${user}@${address}:~/"
+done
+
+for controller in "${controllers_hostnames[@]}"; do
+  echo ">>>>>> Distributing config to $controller"
+  user=${controllers_users["$controller"]}
+  address=${controllers_addresses["$controller"]}
+  scp -q admin.kubeconfig kube-controller-manager.kubeconfig kube-scheduler.kubeconfig "${user}@${address}:~/"
+done
