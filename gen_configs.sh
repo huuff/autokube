@@ -17,10 +17,11 @@ cd config || exit 1
 function gen_config {
   # $1: identifier of the entity (i.e. hostname for nodes/masters or service names for service)
   # $2: user identifier
+  # $3: server address, or API_ADDRESS by default
   kubectl config set-cluster "$CLUSTER_ID" \
     --certificate-authority=../certs/ca.pem \
     --embed-certs=true \
-    --server="https://${API_ADDRESS}:6443" \
+    --server="https://${3:-$API_ADDRESS}:6443" \
     --kubeconfig="$1.kubeconfig" > /dev/null
 
   kubectl config set-credentials "$2" \

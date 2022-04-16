@@ -37,6 +37,8 @@ function csr_filename {
 }
 
 function sign_csr {
+  # $1: id of entity (hostname for nodes/masters, service name for services)
+  # $2: hostname to be set in cert
   # TODO: DRY, I could pass an empty -hostname, but I don't know
   # what cfssl will do in that case, so I'm just being careful here
   if [ -z "${2:-""}" ] # empty or unset
