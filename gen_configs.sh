@@ -33,8 +33,27 @@ for worker in "${workers_hostnames[@]}"; do
     --cluster="$CLUSTER_ID" \
     --user="system:node:$worker" \
     --kubeconfig="${worker}.kubeconfig" > /dev/null
+
+  kubectl config use-context default --kubeconfig="${worker}.kubeconfig" > /dev/null
 done
 
 echo ">>> Generating kube-config auth config"
+kubectl config set-cluster "$CLUSTER_ID" \
+  --certificate-authority=../certs/ca.pem \
+  --embed-certs=true \
+  --server="https://${API_ADDRESS}:6443" \
+  --kubeconfig=kube-proxy.kubeconfig > /dev/null
 
+kubectl config set-credentials "system:kube-proxy" \
+  --client-certificate=../certs/kube-proxy.pem \
+  --client-key=../certs/kube-proxy-key.pem \
+  --embed-certs=true \
+  --kubeconfig=kube-proxy.kubeconfig > /dev/null
+
+kubectl config set-context default \
+  --cluster="${CLUSTER_ID}" \
+  --user="system:kube-proxy" \
+  --kubeconfig=kube-proxy.kubeconfig  > /dev/null
+
+kubectl config use-context default --kubeconfig=kube-proxy.kubeconfig > /dev/null
 ls
