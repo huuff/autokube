@@ -11,6 +11,11 @@ for hostname in $(jq -r '.workers[].hostname' "$CONF"); do
   workers["$hostname"]=$(jq -r --arg h "$hostname" '.workers[] | select(.hostname == $h) | .address' "$CONF")
 done
 
+declare -A controllers
+for hostname in $(jq -r '.controllers[].hostname' "$CONF"); do
+  controllers["$hostname"]=$(jq -r --arg h "$hostname" '.controllers[] | select(.hostname == $h) | .address' "$CONF")
+done
+
 WORKDIR=$(mktemp -d)
 cd "$WORKDIR" || exit 1
 
@@ -32,6 +37,14 @@ function gen_csr {
   ]
 }
 EOF
+}
+
+# Joins arguments with first argument as separator
+# I use it for associative arrays as `join_by , "${FOO[@]}"`
+function join_by {
+  local IFS="$1"
+  shift
+  echo -n "$*"
 }
 
 echo "Step 0: Generating certs"
@@ -109,4 +122,16 @@ cfssl gencert \
   -config=ca-config.json \
   -profile=kubernetes \
   kube-scheduler-csr.json | cfssljson -bare kube-scheduler
+
+echo ">>> Generating the apiserver certificate"
+KUBERNETES_HOSTNAMES=kubernetes,kubernetes.default,kubernetes.default.svc,kubernetes.default.svc.cluster,kubernetes.svc.cluster.local
+gen_csr "kubernetes" "Kubernetes" "$CERT_OU" > kubernetes-csr.json
+cfssl gencert \
+  -loglevel=4 \
+  -ca=ca.pem \
+  -ca-key=ca-key.pem \
+  -config=ca-config.json \
+  -hostname="10.32.0.1,$(join_by , "${controllers[@]}"),127.0.0.1,$KUBERNETES_HOSTNAMES" \
+  -profile=kubernetes \
+  kubernetes-csr.json | cfssljson -bare kubernetes
 ls
