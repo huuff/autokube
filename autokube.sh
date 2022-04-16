@@ -80,7 +80,7 @@ for worker_hostname in "${!workers[@]}"; do
     "$worker_hostname-csr.json" | cfssljson -bare "$worker_hostname"
 done
 
-echo ">>> Generating the controller manager certificate"
+echo ">>> Generating the controller-manager client certificate"
 gen_csr "system:kube-controller-manager" "system:kube-controller-manager" "$CERT_OU" > kube-controller-manager-csr.json
 cfssl gencert \
   -loglevel=4 \
@@ -90,4 +90,23 @@ cfssl gencert \
   -profile=kubernetes \
   kube-controller-manager-csr.json | cfssljson -bare kube-controller-manager
 
+echo ">>> Generating the kube-proxy client certificate"
+gen_csr "system:kube-proxy" "system:node-proxier" "$CERT_OU" > kube-proxy-csr.json
+cfssl gencert \
+  -loglevel=4 \
+  -ca=ca.pem \
+  -ca-key=ca-key.pem \
+  -config=ca-config.json \
+  -profile=kubernetes \
+  kube-proxy-csr.json | cfssljson -bare kube-proxy
+
+echo ">>> Generating the scheduler client certificate"
+gen_csr "system:kube-scheduler" "system:kube-scheduler" "$CERT_OU" > kube-scheduler-csr.json
+cfssl gencert \
+  -loglevel=4 \
+  -ca=ca.pem \
+  -ca-key=ca-key.pem \
+  -config=ca-config.json \
+  -profile=kubernetes \
+  kube-scheduler-csr.json | cfssljson -bare kube-scheduler
 ls
