@@ -1,5 +1,4 @@
 # Tasks
-* Distribute the certs
 
 ## Future
 * Literally any language would be better than bash

@@ -4,7 +4,11 @@ CERT_C=$(jq -r '.certs.C' "$CONF")
 CERT_L=$(jq -r '.certs.L' "$CONF")
 CERT_OU=$(jq -r '.cluster.name' "$CONF")
 declare workers_hostnames
+declare -A workers_addresses
+declare -A workers_users
 declare controllers_hostnames
+declare -A controllers_addresses
+declare -A controllers_users
 function gen_csr {
   cat <<EOF
 {
@@ -114,3 +118,15 @@ echo ">>> Generating the service account key pair"
 gen_csr "service-accounts" "Kubernetes" > "$(csr_filename "service-account")"
 sign_csr "service-account"
 
+echo ">>> Distributing all generated certs"
+for worker in "${workers_hostnames[@]}"; do
+  address="${workers_addresses["$worker"]}"
+  user="${workers_users["$worker"]}"
+  scp ca.pem "${worker}.pem" "${worker}-key.pem" "${user}@${address}:~/"
+done
+
+for controller in "${controllers_hostnames[@]}"; do
+  address="${controllers_addresses["$controller"]}"
+  user="${controllers_users["$controller"]}"
+  scp ca.pem kubernetes.pem kubernetes-key.pem service-account.pem service-account-key.pem "${user}@${address}:~/"
+done
