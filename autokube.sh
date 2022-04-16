@@ -80,4 +80,14 @@ for worker_hostname in "${!workers[@]}"; do
     "$worker_hostname-csr.json" | cfssljson -bare "$worker_hostname"
 done
 
+echo ">>> Generating the controller manager certificate"
+gen_csr "system:kube-controller-manager" "system:kube-controller-manager" "$CERT_OU" > kube-controller-manager-csr.json
+cfssl gencert \
+  -loglevel=4 \
+  -ca=ca.pem \
+  -ca-key=ca-key.pem \
+  -config=ca-config.json \
+  -profile=kubernetes \
+  kube-controller-manager-csr.json | cfssljson -bare kube-controller-manager
+
 ls
