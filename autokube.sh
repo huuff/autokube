@@ -47,6 +47,7 @@ source "$GEN_CONFIGS_SCRIPT"
 cd "$WORKDIR" || exit 1
 
 echo "Step 3: Generating and distributing encryption config"
+echo "=========="
 # shellcheck disable=1090,1091
 source "$GEN_ENCRYPTION_SCRIPT"
 cd "$WORKDIR" || exit 1
