@@ -3,6 +3,7 @@ set -euo pipefail
 CONF=$(realpath "$1")
 CERT_C=$(jq -r '.certs.C' "$CONF")
 CERT_L=$(jq -r '.certs.L' "$CONF")
+CERT_OU=$(jq -r '.cluster.name' "$CONF")
 WORKDIR=$(mktemp -d)
 cd "$WORKDIR" || exit 1
 
@@ -44,7 +45,17 @@ cat > ca-config.json <<EOF
 }
 EOF
 
-gen_csr Kubernetes Kubernetes CA > ca-csr.json
+gen_csr "Kubernetes" "Kubernetes" "CA" > ca-csr.json
 cfssl gencert -loglevel=4 -initca ca-csr.json | cfssljson -bare ca
 
 echo ">>> Generating admin client certificate"
+gen_csr "admin" "system:masters" "$CERT_OU" > admin-csr.json
+cfssl gencert \
+  -loglevel=4 \
+  -ca=ca.pem \
+  -ca-key=ca-key.pem \
+  -config=ca-config.json \
+  -profile=kubernetes \
+  admin-csr.json | cfssljson -bare admin
+
+
