@@ -25,6 +25,20 @@ function gen_csr {
 EOF
 }
 
+function csr_filename {
+  echo "$1-csr.json"
+}
+
+function sign_csr {
+  cfssl gencert \
+    -loglevel=4 \
+    -ca=ca.pem \
+    -ca-key=ca-key.pem \
+    -config=ca-config.json \
+    -profile=kubernetes \
+    "$(csr_filename "$1")" | cfssljson -bare "$1"
+}
+
 # Joins arguments with first argument as separator
 # I use it for associative arrays as `join_by , "${FOO[@]}"`
 function join_by {
@@ -55,14 +69,8 @@ gen_csr "Kubernetes" "Kubernetes" "CA" > ca-csr.json
 cfssl gencert -loglevel=4 -initca ca-csr.json | cfssljson -bare ca
 
 echo ">>> Generating admin client certificate"
-gen_csr "admin" "system:masters" > admin-csr.json
-cfssl gencert \
-  -loglevel=4 \
-  -ca=ca.pem \
-  -ca-key=ca-key.pem \
-  -config=ca-config.json \
-  -profile=kubernetes \
-  admin-csr.json | cfssljson -bare admin
+gen_csr "admin" "system:masters" > "$(csr_filename "admin")"
+sign_csr "admin"
 
 echo ">>> Generating kubelet client certificates"
 for worker_hostname in "${!workers[@]}"; do
@@ -80,34 +88,16 @@ for worker_hostname in "${!workers[@]}"; do
 done
 
 echo ">>> Generating the controller-manager client certificate"
-gen_csr "system:kube-controller-manager" "system:kube-controller-manager" "$CERT_OU" > kube-controller-manager-csr.json
-cfssl gencert \
-  -loglevel=4 \
-  -ca=ca.pem \
-  -ca-key=ca-key.pem \
-  -config=ca-config.json \
-  -profile=kubernetes \
-  kube-controller-manager-csr.json | cfssljson -bare kube-controller-manager
+gen_csr "system:kube-controller-manager" "system:kube-controller-manager" > "$(csr_filename "kube-controller-manager")"
+sign_csr "kube-controller-manager"
 
 echo ">>> Generating the kube-proxy client certificate"
-gen_csr "system:kube-proxy" "system:node-proxier" > kube-proxy-csr.json
-cfssl gencert \
-  -loglevel=4 \
-  -ca=ca.pem \
-  -ca-key=ca-key.pem \
-  -config=ca-config.json \
-  -profile=kubernetes \
-  kube-proxy-csr.json | cfssljson -bare kube-proxy
+gen_csr "system:kube-proxy" "system:node-proxier" > "$(csr_filename "kube-proxy")"
+sign_csr "kube-proxy"
 
 echo ">>> Generating the scheduler client certificate"
-gen_csr "system:kube-scheduler" "system:kube-scheduler" > kube-scheduler-csr.json
-cfssl gencert \
-  -loglevel=4 \
-  -ca=ca.pem \
-  -ca-key=ca-key.pem \
-  -config=ca-config.json \
-  -profile=kubernetes \
-  kube-scheduler-csr.json | cfssljson -bare kube-scheduler
+gen_csr "system:kube-scheduler" "system:kube-scheduler" > "$(csr_filename "kube-scheduler")"
+sign_csr "kube-scheduler"
 
 echo ">>> Generating the apiserver certificate"
 KUBERNETES_HOSTNAMES=kubernetes,kubernetes.default,kubernetes.default.svc,kubernetes.default.svc.cluster,kubernetes.svc.cluster.local
@@ -122,12 +112,6 @@ cfssl gencert \
   kubernetes-csr.json | cfssljson -bare kubernetes
 
 echo ">>> Generating the service account key pair"
-gen_csr "service-accounts" "Kubernetes" > service-account-csr.json
-cfssl gencert \
-  -loglevel=4 \
-  -ca=ca.pem \
-  -ca-key=ca-key.pem \
-  -config=ca-config.json \
-  -profile=kubernetes \
-  service-account-csr.json | cfssljson -bare service-account
+gen_csr "service-accounts" "Kubernetes" > "$(csr_filename "service-account")"
+sign_csr "service-account"
 ls
