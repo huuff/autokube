@@ -234,6 +234,7 @@ subjects:
     name: kubernetes
 EOF
 
+sleep 10
 scp -q kube-apiserver-to-kubelet-{role,binding}.yaml "${ssh_target}:~/"
 ssh "${ssh_target}" "\
   kubectl --kubeconfig admin.kubeconfig apply -f kube-apiserver-to-kubelet-role.yaml \

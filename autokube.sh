@@ -65,5 +65,8 @@ echo "Step 5: Bootstrap controllers"
 echo "=========="
 source "$BOOTSTRAP_CONTROLLERS_SCRIPT"
 cd "$WORKDIR" || exit 1
+echo ">>> Testing whether the apiserver works"
+curl -v --cacert certs/ca.pem "https://${main_controller_address}:6443/version"
 
-echo "$WORKDIR"
+echo ""
+echo "All generated intermediated files are in: $WORKDIR"
