@@ -156,6 +156,15 @@ for controller in "${controllers_hostnames[@]}"; do
   password=${controllers_passwords["$controller"]}
   ssh_target="${user}@${address}"
   apiserver_unit=$(gen_apiserver_unit "$controller" "$address")
+
+  echo ">>>>>> Removing any controller leftovers from previous installations"
+  ssh -tt "$ssh_target" "\
+    { sudo rm -rf /etc/kubernetes/config || true; } \
+    && { sudo rm -rf /var/lib/kubernetes || true; } \
+    && { sudo rm /etc/systemd/{kube-controller-manager,kube-scheduler,kube-apiserver}.service || true; } \
+    && { sudo systemctl disable kube-controller-manager kube-scheduler kube-apiserver || true; } \\
+    && { sudo systemctl stop kube-controller-manager kube-scheduler kube-apiserver || true; }
+  " <<< "$password"
  
   echo ">>>>>> Uploading to $controller"
   scp kube-apiserver kube-controller-manager kube-scheduler kubectl "${ssh_target}:~/"
