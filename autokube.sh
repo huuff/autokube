@@ -7,6 +7,7 @@ GEN_CERTS_SCRIPT=$(realpath ./gen_certs.sh)
 GEN_CONFIGS_SCRIPT=$(realpath ./gen_configs.sh)
 GEN_ENCRYPTION_SCRIPT=$(realpath ./gen_encryption.sh)
 BOOTSTRAP_ETCD_SCRIPT=$(realpath ./bootstrap_etcd.sh)
+BOOTSTRAP_CONTROLLERS_SCRIPT=$(realpath ./bootstrap_controllers.sh)
 
 CONF=$(realpath "$1")
 CLUSTER_ID=$(jq -r '.cluster.id' "$CONF")
@@ -56,3 +57,10 @@ echo "Step 4: Bootstrap etcd"
 echo "=========="
 source "$BOOTSTRAP_ETCD_SCRIPT"
 cd "$WORKDIR" || exit 1
+
+echo "Step 5: Bootstrap controllers"
+echo "=========="
+source "$BOOTSTRAP_CONTROLLERS_SCRIPT"
+cd "$WORKDIR" || exit 1
+
+echo "$WORKDIR"

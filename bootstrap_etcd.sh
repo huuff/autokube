@@ -78,6 +78,12 @@ for controller in "${controllers_hostnames[@]}"; do
   echo ">>>>>>>>> Uploading etcd"
   scp "$ETCD_FILENAME" "${ssh_target}:~/"
   scp "$etcd_unit" "${ssh_target}:~/"
+  echo ">>>>>>>>> Removing any etcd leftovers from previous installations"
+  ssh -tt "$ssh_target" "\
+    { sudo rm -rf /etc/etcd /var/lib/etcd || true; } \
+    && { sudo systemctl disable etcd || true; } \
+    && { sudo systemctl stop etcd || true; }
+  " <<< "$password"
   echo ">>>>>>>>> Starting etcd"
   ssh "$ssh_target" "tar -xf $ETCD_FILENAME"
   ssh -tt "$ssh_target" "\

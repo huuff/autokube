@@ -130,5 +130,5 @@ for controller in "${controllers_hostnames[@]}"; do
   address="${controllers_addresses["$controller"]}"
   user="${controllers_users["$controller"]}"
   echo ">>>>>> Distributing for ${controller}:${address}"
-  scp -q ca.pem kubernetes.pem kubernetes-key.pem service-account.pem service-account-key.pem "${user}@${address}:~/"
+  scp -q ca.pem ca-key.pem kubernetes.pem kubernetes-key.pem service-account.pem service-account-key.pem "${user}@${address}:~/"
 done
