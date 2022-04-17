@@ -35,8 +35,11 @@ for hostname in $(jq -r '.controllers[].hostname' "$CONF"); do
   controllers_addresses["$hostname"]=$(jq -r --arg h "$hostname" '.controllers[] | select(.hostname == $h) | .address' "$CONF")
   controllers_users["$hostname"]=$(jq -r --arg h "$hostname" '.controllers[] | select(.hostname == $h) | .user' "$CONF")
   controllers_passwords["$hostname"]=$(jq -r --arg h "$hostname" '.controllers[] | select(.hostname == $h) | .sudoPassword' "$CONF")
-  
 done
+
+main_controller_hostname=${controllers_hostnames[0]}
+main_controller_address=${controllers_addresses["$main_controller_hostname"]}
+main_controller_user=${controllers_users["$main_controller_hostname"]}
 
 echo "Step 1: Generate and distribute certs"
 echo "=========="

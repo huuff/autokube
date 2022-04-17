@@ -6,12 +6,15 @@ declare -A controllers_users
 declare -A controllers_addresses
 declare -A controllers_passwords
 
+declare main_controller_address
+declare main_controller_user
+
 declare join_by
 source "$join_by"
 
 KUBERNETES_VERSION="v1.21.0"
 # TODO: Should this be the IP of the load balancer in front of the controllers?
-KUBERNETES_PUBLIC_ADDRESS=${controllers_addresses[${controllers_hostnames[0]}]}
+KUBERNETES_PUBLIC_ADDRESS="$main_controller_address"
 
 
 function gen_apiserver_unit {
@@ -159,7 +162,7 @@ for controller in "${controllers_hostnames[@]}"; do
 
   echo ">>>>>> Removing any controller leftovers from previous installations"
   ssh -tt "$ssh_target" "\
-    { sudo rm -rf /etc/kubernetes/config || true; } \
+    { sudo rm -rf /etc/kubernetes || true; } \
     && { sudo rm -rf /var/lib/kubernetes || true; } \
     && { sudo rm /etc/systemd/system/{kube-controller-manager,kube-scheduler,kube-apiserver}.service || true; } \
     && { sudo systemctl disable kube-controller-manager kube-scheduler kube-apiserver || true; } \\
@@ -191,10 +194,7 @@ for controller in "${controllers_hostnames[@]}"; do
 done
 
 echo ">>> Configuring RBAC permissions for the Kubelet API"
-main_controller=${controllers_hostnames[0]}
-main_address=${controllers_addresses["$main_controller"]}
-main_user=${controllers_users["$main_controller"]}
-ssh_target="${main_user}@${main_address}"
+ssh_target="${main_controller_user}@${main_controller_address}"
 
 cat > kube-apiserver-to-kubelet-role.yaml <<EOF
 apiVersion: rbac.authorization.k8s.io/v1
@@ -235,4 +235,7 @@ subjects:
 EOF
 
 scp -q kube-apiserver-to-kubelet-{role,binding}.yaml "${ssh_target}:~/"
-ssh "${ssh_target}" "kubectl apply --kubeconfig admin.kubeconfig -f kube-apiserver-to-kubelet-role.yaml -f kube-apiserver-to-kubelet-binding.yaml"
+ssh "${ssh_target}" "\
+  kubectl --kubeconfig admin.kubeconfig apply -f kube-apiserver-to-kubelet-role.yaml \
+  && kubectl --kubeconfig admin.kubeconfig apply -f kube-apiserver-to-kubelet-binding.yaml
+"
