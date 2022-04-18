@@ -13,11 +13,11 @@ function generate_hosts {
   EXTRA_HOSTS_FILE="extrahosts"
   for controller in "${controllers_hostnames[@]}"; do
     address=${controllers_addresses["$controller"]}
-    echo "$controller $address" >> "$EXTRA_HOSTS_FILE"
+    echo "$address $controller" >> "$EXTRA_HOSTS_FILE"
   done
   for worker in "${workers_hostnames[@]}"; do
     address="${workers_addresses["$worker"]}"
-    echo "$worker $address" >> "$EXTRA_HOSTS_FILE"
+    echo "$address $worker" >> "$EXTRA_HOSTS_FILE"
   done
   echo -n "$EXTRA_HOSTS_FILE"
 }
