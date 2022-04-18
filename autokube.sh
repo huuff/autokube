@@ -9,6 +9,7 @@ GEN_ENCRYPTION_SCRIPT=$(realpath ./gen_encryption.sh)
 BOOTSTRAP_ETCD_SCRIPT=$(realpath ./bootstrap_etcd.sh)
 BOOTSTRAP_CONTROLLERS_SCRIPT=$(realpath ./bootstrap_controllers.sh)
 BOOTSTRAP_WORKERS_SCRIPT=$(realpath ./bootstrap_workers.sh)
+CONFIGURE_KUBECTL_SCRIPT=$(realpath ./configure-kubectl.sh)
 
 CONF=$(realpath "$1")
 CLUSTER_ID=$(jq -r '.cluster.id' "$CONF")
@@ -81,6 +82,12 @@ rm -r controllers
 echo "Step 6: Bootstrap workers"
 echo "=========="
 source "$BOOTSTRAP_WORKERS_SCRIPT"
+cd "$WORKDIR" || exit 1
+
+echo "Step 7: Configure kubectl"
+echo "=========="
 
 echo ""
 echo "All generated intermediated files are in: $WORKDIR"
+source "$CONFIGURE_KUBECTL_SCRIPT"
+cd "$WORKDIR" || exit 1
