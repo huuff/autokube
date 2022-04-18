@@ -237,7 +237,7 @@ for worker in "${workers_hostnames[@]}"; do
   " <<< "$password"
 
   echo ">>>>>> Uploading all config"
-  scp "$CNI_BRIDGE_CONF" "$CNI_LOOPBACK_CONF" "$CONTAINERD_CONF" "$CONTAINERD_UNIT" "$KUBELET_UNIT" "$KUBE_PROXY_CONF" "$KUBE_PROXY_UNIT" "$kubelet_config" "${ssh_target}:~/"
+  scp -q "$CNI_BRIDGE_CONF" "$CNI_LOOPBACK_CONF" "$CONTAINERD_CONF" "$CONTAINERD_UNIT" "$KUBELET_UNIT" "$KUBE_PROXY_CONF" "$KUBE_PROXY_UNIT" "$kubelet_config" "${ssh_target}:~/"
 
   echo ">>>>>> Setting all config"
   ssh -tt "$ssh_target" "\
