@@ -12,7 +12,7 @@ declare main_controller_user
 declare join_by
 source "$join_by"
 
-KUBERNETES_VERSION="v1.21.0"
+declare KUBERNETES_VERSION
 # TODO: Should this be the IP of the load balancer in front of the controllers?
 KUBERNETES_PUBLIC_ADDRESS="$main_controller_address"
 
