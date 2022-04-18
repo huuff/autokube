@@ -185,7 +185,7 @@ for controller in "${controllers_hostnames[@]}"; do
     && sudo mv kube-controller-manager.kubeconfig /var/lib/kubernetes \
     && sudo mv kube-controller-manager.service /etc/systemd/system/ \
     && sudo mv kube-scheduler.kubeconfig /var/lib/kubernetes \
-    && sudo mv \"$scheduler_config\" /var/lib/kubernetes/ \
+    && sudo mv \"$scheduler_config\" /etc/kubernetes/config \
     && sudo mv \"$scheduler_unit\" /etc/systemd/system/kube-scheduler.service \
     && sudo systemctl daemon-reload \
     && sudo systemctl enable kube-apiserver kube-controller-manager kube-scheduler \
