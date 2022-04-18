@@ -110,7 +110,7 @@ gen_csr "system:kube-scheduler" "system:kube-scheduler" > "$(csr_filename "kube-
 sign_csr "kube-scheduler"
 
 echo ">>> Generating the apiserver certificate"
-KUBERNETES_HOSTNAMES="10.32.0.1,$(join_by , "${controllers_addresses[@]}"),127.0.0.1,kubernetes,kubernetes.default,kubernetes.default.svc,kubernetes.default.svc.cluster,kubernetes.svc.cluster.local"
+KUBERNETES_HOSTNAMES="10.32.0.1,$(join_by , "${controllers_addresses[@]}"),$(join_by , "${controllers_hostnames[@]}"),127.0.0.1,kubernetes,kubernetes.default,kubernetes.default.svc,kubernetes.default.svc.cluster,kubernetes.svc.cluster.local"
 gen_csr "kubernetes" "Kubernetes" > "$(csr_filename "kubernetes")"
 sign_csr "kubernetes" "$KUBERNETES_HOSTNAMES"
 
