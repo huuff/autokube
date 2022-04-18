@@ -45,7 +45,7 @@ function sign_csr {
   # $2: hostname to be set in cert
   # TODO: DRY, I could pass an empty -hostname, but I don't know
   # what cfssl will do in that case, so I'm just being careful here
-  if [ -z "${2:-""}" ] # empty or unset
+  if [ -z "$2" ] # empty or unset
   then
     cfssl gencert \
       -loglevel=4 \

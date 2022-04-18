@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # shellcheck disable=2034,1090,1091
-set -euo pipefail
+set -eo pipefail
 set -- "${1:-./sample-cluster.json}"
 
 GEN_CERTS_SCRIPT=$(realpath ./gen_certs.sh)
