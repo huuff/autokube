@@ -93,8 +93,9 @@ sign_csr "admin"
 echo ">>> Generating kubelet client certificates"
 for worker_hostname in "${workers_hostnames[@]}"; do
   echo ">>>>>> Generating for $worker_hostname"
+  worker_address=${workers_addresses["$worker_hostname"]}
   gen_csr "system:node:$worker_hostname" "system:nodes" > "$(csr_filename "$worker_hostname")"
-  sign_csr "$worker_hostname"
+  sign_csr "$worker_hostname" "$worker_hostname,$worker_address"
 done
 
 echo ">>> Generating the controller-manager client certificate"
