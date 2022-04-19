@@ -14,40 +14,6 @@ RUNC_VERSION="v1.0.0-rc93"
 # TODO: Make this configurable?
 POD_CIDR="10.100.0.0/16"
 
-function gen_cni_bridge_conf {
-  FILENAME="10-bridge.conf"
-  cat > "$FILENAME" <<EOF
-{
-    "cniVersion": "0.4.0",
-    "name": "bridge",
-    "type": "bridge",
-    "bridge": "cnio0",
-    "isGateway": true,
-    "ipMasq": true,
-    "ipam": {
-        "type": "host-local",
-        "ranges": [
-          [{"subnet": "${POD_CIDR}"}]
-        ],
-        "routes": [{"dst": "0.0.0.0/0"}]
-    }
-}
-EOF
-  echo -n "$FILENAME"
-}
-
-function gen_cni_loopback_conf {
-  FILENAME="99-loopback.conf"
-  cat > "$FILENAME" <<EOF
-{
-    "cniVersion": "0.4.0",
-    "name": "lo",
-    "type": "loopback"
-}
-EOF
-  echo -n "$FILENAME"
-}
-
 function gen_containerd_conf {
   FILENAME="config.toml"
   cat > "$FILENAME" <<EOF
@@ -178,8 +144,6 @@ EOF
 mkdir workers
 cd workers || exit 1
 
-CNI_BRIDGE_CONF=$(gen_cni_bridge_conf)
-CNI_LOOPBACK_CONF=$(gen_cni_loopback_conf)
 CONTAINERD_CONF=$(gen_containerd_conf)
 CONTAINERD_UNIT=$(gen_containerd_unit)
 KUBELET_UNIT=$(gen_kubelet_unit)
@@ -237,7 +201,7 @@ for worker in "${workers_hostnames[@]}"; do
   " <<< "$password"
 
   echo ">>>>>> Uploading all config"
-  scp -q "$CNI_BRIDGE_CONF" "$CNI_LOOPBACK_CONF" "$CONTAINERD_CONF" "$CONTAINERD_UNIT" "$KUBELET_UNIT" "$KUBE_PROXY_CONF" "$KUBE_PROXY_UNIT" "$kubelet_config" "${ssh_target}:~/"
+  scp -q "$CONTAINERD_CONF" "$CONTAINERD_UNIT" "$KUBELET_UNIT" "$KUBE_PROXY_CONF" "$KUBE_PROXY_UNIT" "$kubelet_config" "${ssh_target}:~/"
 
   echo ">>>>>> Setting all config"
   ssh -tt "$ssh_target" "\
@@ -245,8 +209,6 @@ for worker in "${workers_hostnames[@]}"; do
     && sudo cp \"$worker-key.pem\" \"$worker\".pem /var/lib/kubelet/ \
     && sudo cp \"$worker.kubeconfig\" /var/lib/kubelet/kubeconfig \
     && sudo cp ca.pem /var/lib/kubernetes/ \
-    && sudo cp $CNI_BRIDGE_CONF /etc/cni/net.d/ \
-    && sudo cp $CNI_LOOPBACK_CONF /etc/cni/net.d/ \
     && sudo cp $CONTAINERD_CONF /etc/containerd/ \
     && sudo cp $CONTAINERD_UNIT /etc/systemd/system/ \
     && sudo cp $kubelet_config /var/lib/kubelet/ \
