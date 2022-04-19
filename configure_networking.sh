@@ -64,3 +64,14 @@ done
 # TODO: Using master is too nondeterministic
 echo ">>> Applying flannel"
 kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+
+FLANNEL_DEFAULT_POD_CIDR="10.244.0.0/16"
+echo ">>> HACK: Applying a patch to set the pod CIDR in nodes since nothing else works"
+sleep 5
+for worker in "${workers_hostnames[@]}"; do
+  kubectl patch node "$worker" -p "{\"spec\": { \"podCIDR\": \"$FLANNEL_DEFAULT_POD_CIDR\"}}"
+done
+
+echo ">>> Restarting flannel pods so patch works"
+kubectl delete po -n kube-system -l app=flannel
+
