@@ -251,7 +251,7 @@ for worker in "${workers_hostnames[@]}"; do
     && sudo cp $CONTAINERD_UNIT /etc/systemd/system/ \
     && sudo cp $kubelet_config /var/lib/kubelet/ \
     && sudo cp $KUBELET_UNIT /etc/systemd/system/ \
-    && sudo cp kube-proxy.kubeconfig /var/lib/kube-proxy/ \
+    && sudo cp kube-proxy.kubeconfig /var/lib/kube-proxy/kubeconfig \
     && sudo cp $KUBE_PROXY_CONF /var/lib/kube-proxy/ \
     && sudo cp $KUBE_PROXY_UNIT /etc/systemd/system/ 
   " <<< "$password"
