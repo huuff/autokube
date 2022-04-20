@@ -27,7 +27,7 @@ cd cni || exit 1
 
 EXTRA_HOSTS_FILE=$(generate_hosts)
 
-echo ">>> Distributing hosts file to all nodes"
+echo ">>> Doing network configuration on all hosts"
 # TODO: Both loops are the same, DRY, but bash is really unergonomic
 for controller in "${controllers_hostnames[@]}"; do
   address=${controllers_addresses["$controller"]}
@@ -41,6 +41,12 @@ for controller in "${controllers_hostnames[@]}"; do
   echo ">>>>>> Installing hosts file on $controller"
   ssh -tt "$ssh_target" "sudo sh -c 'cat $EXTRA_HOSTS_FILE >> /etc/hosts'" <<< "$password"
 done
+  echo ">>>>>> Enabling packer forwarding in $controller"
+  ssh -tt "$ssh_target" "\
+    sudo sysctl net.ipv4.conf.all.forwarding=1 \
+    && sudo modprobe br_netfilter \
+    && sudo sh -c 'echo \"br-netfilter\" >> /etc/modules-load.d/modules.conf'
+  " <<< "$password"
 
 for worker in "${workers_hostnames[@]}"; do
   address=${workers_addresses["$worker"]}
@@ -58,8 +64,13 @@ for worker in "${workers_hostnames[@]}"; do
   " <<< "$password"
 
   echo ">>>>>> Enabling packer forwarding in $worker"
-  ssh -tt "$ssh_target" "sudo sysctl net.ipv4.conf.all.forwarding=1" <<< "$password"
+  ssh -tt "$ssh_target" "\
+    sudo sysctl net.ipv4.conf.all.forwarding=1 \
+    && sudo modprobe br_netfilter \
+    && sudo sh -c 'echo \"br-netfilter\" >> /etc/modules-load.d/modules.conf'
+  " <<< "$password"
 done
+
 
 # TODO: Using master is too nondeterministic
 echo ">>> Applying flannel"
